@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
+use App\Models\Activity;
+use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -18,7 +20,7 @@ class ReportController extends Controller
 
         $orders = Order::whereBetween('created_at', [
             Carbon::parse($startDate)->startOfDay(),
-            Carbon::parse($endDate)->endOfDay()
+            Carbon::parse($endDate)->endOfDay(),
         ])->where('status', 'Completed')->get();
 
         $totalRevenue = 0;
@@ -40,12 +42,12 @@ class ReportController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'totalCogs' => $totalCogs,
                 'netProfit' => $netProfit,
-                'totalOrders' => $orders->count()
+                'totalOrders' => $orders->count(),
             ],
             'filters' => [
                 'start_date' => $startDate,
-                'end_date' => $endDate
-            ]
+                'end_date' => $endDate,
+            ],
         ]);
     }
 
@@ -56,10 +58,10 @@ class ReportController extends Controller
 
         $orders = Order::with('customer')->whereBetween('created_at', [
             Carbon::parse($startDate)->startOfDay(),
-            Carbon::parse($endDate)->endOfDay()
+            Carbon::parse($endDate)->endOfDay(),
         ])->get();
 
-        $response = new StreamedResponse(function() use ($orders) {
+        $response = new StreamedResponse(function () use ($orders) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['Order ID', 'Date', 'Customer Name', 'Status', 'Total Amount']);
             foreach ($orders as $order) {
@@ -68,7 +70,7 @@ class ReportController extends Controller
                     $order->created_at->format('Y-m-d H:i:s'),
                     $order->customer->name ?? 'Unknown',
                     $order->status,
-                    $order->total_amount
+                    $order->total_amount,
                 ]);
             }
             fclose($handle);
@@ -84,7 +86,7 @@ class ReportController extends Controller
     {
         $products = Product::all();
 
-        $response = new StreamedResponse(function() use ($products) {
+        $response = new StreamedResponse(function () use ($products) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, ['Product Name', 'SKU', 'Category', 'Barcode', 'Cost Price', 'Selling Price', 'Stock Level', 'Total Value (Cost)']);
             foreach ($products as $product) {
@@ -96,7 +98,7 @@ class ReportController extends Controller
                     $product->cost_price ?? 0,
                     $product->price,
                     $product->stock,
-                    ($product->cost_price ?? 0) * $product->stock
+                    ($product->cost_price ?? 0) * $product->stock,
                 ]);
             }
             fclose($handle);
@@ -104,6 +106,77 @@ class ReportController extends Controller
 
         $response->headers->set('Content-Type', 'text/csv');
         $response->headers->set('Content-Disposition', 'attachment; filename="inventory_report_'.Carbon::now()->format('Y-m-d').'.csv"');
+
+        return $response;
+    }
+
+    public function exportActivityLog(Request $request)
+    {
+        $query = Activity::with('user');
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay(),
+            ]);
+        }
+
+        $activities = $query->orderBy('created_at', 'desc')->get();
+
+        $response = new StreamedResponse(function () use ($activities) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Date', 'Time', 'User', 'Action', 'Description', 'IP Address']);
+            foreach ($activities as $activity) {
+                fputcsv($handle, [
+                    $activity->created_at->format('Y-m-d'),
+                    $activity->created_at->format('H:i:s'),
+                    $activity->user->name ?? 'System',
+                    $activity->action,
+                    $activity->description ?? '-',
+                    $activity->ip_address ?? '-',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'activity_log_'.Carbon::now()->format('Y-m-d').'.csv';
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
+
+        return $response;
+    }
+
+    public function exportExpenses(Request $request)
+    {
+        $query = Expense::query();
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay(),
+            ]);
+        }
+
+        $expenses = $query->orderBy('created_at', 'desc')->get();
+
+        $response = new StreamedResponse(function () use ($expenses) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Date', 'Category', 'Description', 'Amount', 'Reference']);
+            foreach ($expenses as $expense) {
+                fputcsv($handle, [
+                    $expense->created_at->format('Y-m-d'),
+                    $expense->category,
+                    $expense->description ?? '-',
+                    $expense->amount,
+                    $expense->reference ?? '-',
+                ]);
+            }
+            fclose($handle);
+        });
+
+        $filename = 'expenses_'.Carbon::now()->format('Y-m-d').'.csv';
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
 
         return $response;
     }

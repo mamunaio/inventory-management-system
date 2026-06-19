@@ -1,20 +1,17 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { motion } from "framer-motion";
-import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, Search, Bell, Truck, Briefcase, Settings, BarChart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { LayoutDashboard, Users, Package, ShoppingCart, Settings, LogOut, Menu, X, Bell, Search, Truck, Briefcase, Activity, BarChart, BarChart3, PieChart, TrendingUp, Monitor, UserCog, Receipt, Webhook, Store } from "lucide-react";
+
+import FlashToast from '@/Components/FlashToast';
 
 export default function EnterpriseLayout({ children, title }) {
-    const { auth } = usePage().props;
-    const { url } = usePage();
-
-    const isActive = (href) => {
-        if (href === '#') return false;
-        // Basic match for active route
-        return url.startsWith(new URL(href).pathname);
-    };
+    const { auth, settings } = usePage().props;
+    const storeName = settings?.store_name || "Antigravity POS";
 
     return (
         <div className="flex h-screen w-full bg-[#000000] overflow-hidden font-sans text-white relative">
-            <Head title={title} />
+            <Head title={title ? `${title} - ${storeName}` : storeName} />
+            <FlashToast />
             
             {/* Subtle Grid Background */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px]"></div>
@@ -30,20 +27,31 @@ export default function EnterpriseLayout({ children, title }) {
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#6D28D9] to-[#38BDF8] flex items-center justify-center">
                         <Package className="w-4 h-4 text-white" />
                     </div>
-                    <span className="font-semibold tracking-tight">IG-Inventory Pro</span>
+                    <span className="font-semibold tracking-tight truncate">{storeName}</span>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                     {[
-                        { name: 'Dashboard', icon: LayoutDashboard, route: 'dashboard' },
-                        { name: 'Reports & Analytics', icon: BarChart, route: 'reports.index' },
-                        { name: 'Products', icon: Package, route: 'products.index' },
-                        { name: 'Customers', icon: Users, route: 'customers.index' },
-                        { name: 'Orders / POS', icon: ShoppingCart, route: 'orders.index' },
-                        { name: 'Purchases (Restock)', icon: Truck, route: 'purchases.index' },
-                        { name: 'Suppliers', icon: Briefcase, route: 'suppliers.index' },
-                        { name: 'Settings', icon: Settings, route: 'profile.edit' },
-                    ].map((item) => (
+                        { name: 'Dashboard', icon: LayoutDashboard, route: 'dashboard', roles: ['admin', 'cashier'] },
+                        { name: 'Reports & Analytics', icon: BarChart, route: 'reports.index', roles: ['admin'] },
+                        { name: 'Products', icon: Package, route: 'products.index', roles: ['admin', 'cashier'] },
+                        { name: 'Branches', icon: Store, route: 'branches.index', roles: ['admin'] },
+                        { name: 'Customers', icon: Users, route: 'customers.index', roles: ['admin', 'cashier'] },
+                        { name: 'POS Terminal', icon: Monitor, route: 'pos.index', roles: ['admin', 'cashier'] },
+                        { name: 'Orders History', icon: ShoppingCart, route: 'orders.index', roles: ['admin', 'cashier'] },
+                        { name: 'Purchases (Restock)', icon: Truck, route: 'purchases.index', roles: ['admin'] },
+                        { name: 'Suppliers', icon: Briefcase, route: 'suppliers.index', roles: ['admin'] },
+                        { name: 'Expense Management', icon: Receipt, route: 'expenses.index', roles: ['admin'] },
+                        { name: 'Advanced Analytics', icon: BarChart3, route: 'analytics.index', roles: ['admin'] },
+                        { name: 'E-Commerce Integrations', icon: Webhook, route: 'integrations.index', roles: ['admin'] },
+                        { name: 'HR & Payroll', icon: Users, route: 'hr.payroll', roles: ['admin'] },
+                        { name: 'User Management', icon: UserCog, route: 'users.index', roles: ['admin'] },
+                        { name: 'Activity Log', icon: Activity, route: 'activities.index', roles: ['admin'] },
+                        { name: 'Settings', icon: Settings, route: 'settings.index', roles: ['admin'] },
+                    ].filter(item => {
+                        const userRole = auth.user.role || 'admin'; // fallback to admin if not set
+                        return item.roles.includes(userRole);
+                    }).map((item) => (
                         <Link
                             key={item.name}
                             href={route(item.route)}

@@ -39,6 +39,7 @@ export default function PurchasesIndex({ purchases }) {
                             <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider">Date</th>
                             <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider">Supplier</th>
                             <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider">Product</th>
+                            <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider">Status</th>
                             <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider text-right">Qty Received</th>
                             <th className="p-4 text-xs font-medium text-white/50 uppercase tracking-wider text-right">Total Cost</th>
                         </tr>
@@ -46,7 +47,7 @@ export default function PurchasesIndex({ purchases }) {
                     <tbody>
                         {purchases.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="p-8 text-center text-white/40 text-sm">
+                                <td colSpan="7" className="p-8 text-center text-white/40 text-sm">
                                     <PackagePlus className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                     No purchase records found.
                                 </td>
@@ -64,8 +65,17 @@ export default function PurchasesIndex({ purchases }) {
                                     <td className="p-4 text-sm">
                                         {purchase.product?.name || 'Unknown Product'}
                                     </td>
-                                    <td className="p-4 text-right font-medium text-sm text-green-400">
-                                        +{purchase.quantity}
+                                    <td className="p-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${purchase.status === 'Draft' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                                            {purchase.status || 'Received'}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-right font-medium text-sm text-white/80">
+                                        {purchase.status === 'Draft' ? (
+                                            <span className="text-yellow-400">Wait: {purchase.quantity}</span>
+                                        ) : (
+                                            <span className="text-green-400">+{purchase.quantity}</span>
+                                        )}
                                     </td>
                                     <td className="p-4 text-right text-sm">
                                         ${parseFloat(purchase.total_cost).toFixed(2)}

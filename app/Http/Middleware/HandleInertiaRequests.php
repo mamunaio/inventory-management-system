@@ -29,11 +29,19 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $settings = \App\Models\Setting::pluck('value', 'key')->toArray();
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'settings' => $settings,
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'new_order_id' => fn () => $request->session()->get('new_order_id'),
+            ]
         ];
     }
 }

@@ -1,6 +1,6 @@
 import EnterpriseLayout from '@/Layouts/EnterpriseLayout';
 import { motion } from "framer-motion";
-import { Download, TrendingUp, DollarSign, Activity, FileSpreadsheet } from "lucide-react";
+import { Download, TrendingUp, DollarSign, Activity, FileSpreadsheet, Receipt, History } from "lucide-react";
 import { useForm } from '@inertiajs/react';
 
 export default function ReportsIndex({ metrics, filters }) {
@@ -20,6 +20,14 @@ export default function ReportsIndex({ metrics, filters }) {
 
     const handleExportInventory = () => {
         window.location.href = route('reports.export-inventory');
+    };
+
+    const handleExportActivityLog = () => {
+        window.location.href = route('reports.export-activity-log', { start_date: data.start_date, end_date: data.end_date });
+    };
+
+    const handleExportExpenses = () => {
+        window.location.href = route('reports.export-expenses', { start_date: data.start_date, end_date: data.end_date });
     };
 
     return (
@@ -153,6 +161,46 @@ export default function ReportsIndex({ metrics, filters }) {
                     >
                         <Download className="w-5 h-5" />
                         <span>Download Inventory CSV</span>
+                    </button>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+                    className="p-8 rounded-2xl bg-[#0A0A0A]/50 border border-white/10 backdrop-blur-md flex flex-col items-center text-center"
+                >
+                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4 border border-green-500/20">
+                        <History className="w-8 h-8 text-green-400" />
+                    </div>
+                    <h2 className="text-lg font-semibold mb-2">Export Activity Log</h2>
+                    <p className="text-white/50 text-sm mb-6 max-w-sm">
+                        Download a CSV of all user actions and system events within the selected date range.
+                    </p>
+                    <button 
+                        onClick={handleExportActivityLog}
+                        className="px-6 py-3 w-full bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <Download className="w-5 h-5" />
+                        <span>Download Activity CSV</span>
+                    </button>
+                </motion.div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}
+                    className="p-8 rounded-2xl bg-[#0A0A0A]/50 border border-white/10 backdrop-blur-md flex flex-col items-center text-center"
+                >
+                    <div className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mb-4 border border-orange-500/20">
+                        <Receipt className="w-8 h-8 text-orange-400" />
+                    </div>
+                    <h2 className="text-lg font-semibold mb-2">Export Expenses Report</h2>
+                    <p className="text-white/50 text-sm mb-6 max-w-sm">
+                        Download a CSV of all recorded expenses with categories, amounts, and descriptions.
+                    </p>
+                    <button 
+                        onClick={handleExportExpenses}
+                        className="px-6 py-3 w-full bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <Download className="w-5 h-5" />
+                        <span>Download Expenses CSV</span>
                     </button>
                 </motion.div>
             </div>
